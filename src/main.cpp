@@ -515,6 +515,10 @@ void send_rfid_Receive()
 void call_tpm()
 {
   light_lock = 0;
+  if (state == 3)
+  {
+    return;
+  }
   if (countState > 0)
   {
     return;
