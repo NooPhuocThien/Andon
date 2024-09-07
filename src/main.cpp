@@ -19,7 +19,7 @@ CRGB leds[NUM_LEDS];
 #define RST_PIN 22
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-#define FIRMWARE_VERSION "1.6" // ngày 04/09/2024 version mới là 1.6
+#define FIRMWARE_VERSION "1.7" // ngày 04/09/2024 version mới là 1.6
 
 bool checkLEDVal; // bi?n ?i?u khi?n ch?p t?t khi ??a th? vao RFID
 int updateDeadAlive_time = 600000;
@@ -481,7 +481,6 @@ void send_rfid_Receive()
       const char *message = doc["message"]; // "Success"
       Serial.println(statusCode);
       Serial.println(message);
-      ///////////////////////////////////////////////////
       Serial.println(payload);
       if (strcmp(getOK, message) == 0)
       {
@@ -516,6 +515,10 @@ void send_rfid_Receive()
 void call_tpm()
 {
   light_lock = 0;
+  if (countState > 0)
+  {
+    return;
+  }
   Serial.println("Got it");
   if (!mfrc522.PICC_IsNewCardPresent())
   {
@@ -703,6 +706,7 @@ void setup()
   button3.onPressed(material);
   button4.onPressed(call_tpm);
   button3.onPressedFor(4000, resetFunction);
+  button2.onPressedFor(4000, resetFunction);
   ID_check();
 
   WiFi.mode(WIFI_STA);
