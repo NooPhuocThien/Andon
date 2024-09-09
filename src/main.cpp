@@ -19,14 +19,13 @@ CRGB leds[NUM_LEDS];
 #define RST_PIN 22
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-#define FIRMWARE_VERSION "1.7" // ngày 04/09/2024 version mới là 1.6
+#define FIRMWARE_VERSION "1.8" // ngày 07/09/2024 version mới là 1.8
 
 bool checkLEDVal; // bi?n ?i?u khi?n ch?p t?t khi ??a th? vao RFID
 int updateDeadAlive_time = 600000;
 unsigned long countingTimeDeadAlive = 0;
 unsigned long countingTimeWIFIcheck = 0;
 unsigned long espRestartTimeOut = 0;
-
 unsigned long callLeaderCountDown = 0;
 unsigned long callMaterialCountDown = 0;
 
@@ -61,7 +60,8 @@ String rfid;
 // Your Domain name with URL path or IP address with path
 
 // 08:3A:F2:51:01:3C
-// uint8_t newMACAddress[] = {0x08, 0x3A, 0xF2, 0x51, 0x01, 0x3C};
+uint8_t newMACAddress[] = {0x58, 0xBF, 0x25, 0x81, 0x7C, 0x2C};
+
 // MAC
 
 // String serverName = "http://172.21.149.109:8005/aco_issue";
@@ -204,13 +204,11 @@ void check_WIFI()
 
 void dead_alive()
 {
-
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
     http.begin("http://172.21.143.74:8080/cmmsservice/repairCheckList/healthCheck/VY/" + ID + "");
     int httpResponseCode = http.GET();
-
     if (httpResponseCode > 0)
     {
       Serial.print("HTTP Response code: ");
@@ -451,6 +449,7 @@ void send_rfid_Receive()
   //       EEPROM.commit();
   //       Serial.println("reset countstate do b?m linh tinh");
   //     }
+
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
@@ -716,7 +715,7 @@ void setup()
   WiFi.mode(WIFI_STA);
 
   // MAC
-  // esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
+  esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
   // Serial.print("[NEW] ESP32 Board MAC Address:  ");
   // Serial.println(WiFi.macAddress());
   // MAC
@@ -729,6 +728,7 @@ void setup()
   dead_alive();
   update_check();
 }
+
 void loop()
 {
   check_RFID();
@@ -757,6 +757,7 @@ void loop()
   }
   switch (state)
   {
+
   case 0:
     if (light_lock == 1)
     {
