@@ -19,13 +19,14 @@ CRGB leds[NUM_LEDS];
 #define RST_PIN 22
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-#define FIRMWARE_VERSION "1.8" // ngày 07/09/2024 version mới là 1.8
+#define FIRMWARE_VERSION "1.8" // ngày 04/09/2024 version mới là 1.6
 
 bool checkLEDVal; // bi?n ?i?u khi?n ch?p t?t khi ??a th? vao RFID
 int updateDeadAlive_time = 600000;
 unsigned long countingTimeDeadAlive = 0;
 unsigned long countingTimeWIFIcheck = 0;
 unsigned long espRestartTimeOut = 0;
+
 unsigned long callLeaderCountDown = 0;
 unsigned long callMaterialCountDown = 0;
 
@@ -60,13 +61,13 @@ String rfid;
 // Your Domain name with URL path or IP address with path
 
 // 08:3A:F2:51:01:3C
-uint8_t newMACAddress[] = {0x58, 0xBF, 0x25, 0x81, 0x7C, 0x2C};
-
+// uint8_t newMACAddress[] = {0x08, 0x3A, 0xF2, 0x51, 0x01, 0x3C};
 // MAC
 
 // String serverName = "http://172.21.149.109:8005/aco_issue";
 unsigned long lastTime = 0;
 unsigned long timerDelay = 5000;
+
 void ID_check()
 {
   if (!SPIFFS.begin(true))
@@ -204,11 +205,13 @@ void check_WIFI()
 
 void dead_alive()
 {
+
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
     http.begin("http://172.21.143.74:8080/cmmsservice/repairCheckList/healthCheck/VY/" + ID + "");
     int httpResponseCode = http.GET();
+
     if (httpResponseCode > 0)
     {
       Serial.print("HTTP Response code: ");
@@ -449,7 +452,6 @@ void send_rfid_Receive()
   //       EEPROM.commit();
   //       Serial.println("reset countstate do b?m linh tinh");
   //     }
-
   if (WiFi.status() == WL_CONNECTED)
   {
     HTTPClient http;
@@ -480,6 +482,7 @@ void send_rfid_Receive()
       const char *message = doc["message"]; // "Success"
       Serial.println(statusCode);
       Serial.println(message);
+      ///////////////////////////////////////////////////
       Serial.println(payload);
       if (strcmp(getOK, message) == 0)
       {
@@ -640,6 +643,31 @@ void Steve_checkSPIConnection()
     ESP.restart();
   }
 }
+void resetEEprom()
+{
+  state = 0;
+  countState = 0;
+  light_lock = 0;
+  EEPROM.write(0, state);
+  EEPROM.write(1, countState);
+  EEPROM.commit();
+  Serial.print("countState: ");
+  Serial.println(countState);
+  Serial.println("State saved in flash memory");
+  Serial.println("ESP reset in 2s");
+  digitalWrite(LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(LED_PIN, LOW);
+  delay(100);
+  digitalWrite(LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(LED_PIN, LOW);
+  delay(100);
+  digitalWrite(LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(LED_PIN, LOW);
+  ESP.restart();
+}
 
 void resetFunction()
 {
@@ -661,8 +689,7 @@ void resetFunction()
 void setup()
 {
   Serial.begin(115200);
-  Serial.print("Version: ");
-  Serial.println(FIRMWARE_VERSION);
+
   delay(10);
   SPI.begin();
   EEPROM.begin(EEPROM_SIZE);
@@ -705,17 +732,17 @@ void setup()
   button3.begin();
   button4.begin();
   button1.onPressed(receive_order);
+  button1.onPressedFor(5000, resetEEprom);
   button2.onPressed(leader);
+  button2.onPressedFor(4000, resetFunction);
   button3.onPressed(material);
   button4.onPressed(call_tpm);
-  button3.onPressedFor(4000, resetFunction);
-  button2.onPressedFor(4000, resetFunction);
-  ID_check();
 
+  ID_check();
   WiFi.mode(WIFI_STA);
 
   // MAC
-  esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
+  // esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress[0]);
   // Serial.print("[NEW] ESP32 Board MAC Address:  ");
   // Serial.println(WiFi.macAddress());
   // MAC
@@ -728,7 +755,6 @@ void setup()
   dead_alive();
   update_check();
 }
-
 void loop()
 {
   check_RFID();
@@ -757,7 +783,6 @@ void loop()
   }
   switch (state)
   {
-
   case 0:
     if (light_lock == 1)
     {
